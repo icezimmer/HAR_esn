@@ -1,6 +1,10 @@
-function data = dataLoader()
+function [input_data, target_data] = dataLoader()
 
-data = zeros(6, 480, 0);
+input_data = zeros(6, 480, 0);
+target_data = zeros(7, 0); % one hot encoding for target
+
+one_hot = eye(7);
+
 opts = detectImportOptions(fullfile('AReM','bending1','dataset1.csv'));
 var_names = {'avg_rss12','var_rss12','avg_rss13','var_rss13','avg_rss23','var_rss23'};
 opts.SelectedVariableNames = var_names;
@@ -8,25 +12,29 @@ opts.SelectedVariableNames = var_names;
 for num = 1:7
     T = readtable(fullfile('AReM','bending1', strcat('dataset', num2str(num), '.csv')),opts);
     ts = T{:,:}';
-    data = cat(3,data,ts);
+    input_data = cat(3,input_data,ts);
+    target_data = cat(2,target_data,one_hot(:,1));
 end
 
 for num = 1:6
     T = readtable(fullfile('AReM','bending2', strcat('dataset', num2str(num), '.csv')),opts);
     ts = T{:,:}';
-    data = cat(3,data,ts);
+    input_data = cat(3,input_data,ts);
+    target_data = cat(2,target_data,one_hot(:,2));
 end
 
 for num = 1:15
     T = readtable(fullfile('AReM','cycling', strcat('dataset', num2str(num), '.csv')),opts);
     ts = T{:,:}';
-    data = cat(3,data,ts);
+    input_data = cat(3,input_data,ts);
+    target_data = cat(2,target_data,one_hot(:,3));
 end
 
 for num = 1:15
     T = readtable(fullfile('AReM','lying', strcat('dataset', num2str(num), '.csv')),opts);
     ts = T{:,:}';
-    data = cat(3,data,ts);
+    input_data = cat(3,input_data,ts);
+    target_data = cat(2,target_data,one_hot(:,4));
 end
 
 for num = 1:15
@@ -36,19 +44,22 @@ for num = 1:15
         T = [T(1:54,:);array2table((T{54,:}+T{55,:})/2, "VariableNames",var_names);T(55:end,:)];
     end
     ts = T{:,:}';
-    data = cat(3,data,ts);
+    input_data = cat(3,input_data,ts);
+    target_data = cat(2,target_data,one_hot(:,5));
 end
 
 for num = 1:15
     T = readtable(fullfile('AReM','standing', strcat('dataset', num2str(num), '.csv')),opts);
     ts = T{:,:}';
-    data = cat(3,data,ts);
+    input_data = cat(3,input_data,ts);
+    target_data = cat(2,target_data,one_hot(:,6));
 end
 
 for num = 1:15
     T = readtable(fullfile('AReM','walking', strcat('dataset', num2str(num), '.csv')),opts);
     ts = T{:,:}';
-    data = cat(3,data,ts);
+    input_data = cat(3,input_data,ts);
+    target_data = cat(2,target_data,one_hot(:,7));
 end
 
 end
