@@ -25,23 +25,24 @@ vl_tg = target_data(:,vl_index);
 ts_tg = target_data(:,ts_index);
 
 % Hyper-parameters
+
 omega_in = 0.4;
 rho = 0.9;
 Nh = [10, 50, 100, 300, 500];
 dns = 0.1;
 a = [0.1, 0.3, 0.5, 0.7, 1];
 lambda_r = [0.0001, 0.001, 0.01, 0.1, 0.5, 1, 5, 10, 100, 1000];
-tot = length(omega_in)*length(rho)*length(Nh)*length(dns)*length(a)*length(lambda_r);
 
 %{
 omega_in = 0.4;
 rho = 0.9;
-Nh = 50;
+Nh = 100;
 dns = 0.1;
 a = 0.1;
 lambda_r = 0.0001;
 %}
 
+tot = length(omega_in)*length(rho)*length(Nh)*length(dns)*length(a)*length(lambda_r);
 r_guesses = 5;
 %{
 meanLoss_tr = 0;
@@ -67,7 +68,7 @@ for i = 1:length(omega_in)
                     for n = 1:length(lambda_r)
                         meanAccuracy_K_vl = 0;
                         config = config+1;
-                        disp([num2str(config/tot),'%'])
+                        disp([num2str(100*(config/tot)),'%'])
                         for seed = 1:r_guesses
                             % TRAINING
                             hidden_tr = zeros(Nh(k),0);
@@ -78,12 +79,11 @@ for i = 1:length(omega_in)
                             end
                             
                             W_out = trainOffline(hidden_tr,tr_tg, lambda_r(n));
-                            %y_tr = readout(hidden_tr,W_out);
-                            
-                            %[~, argmax_tr] = max(y_tr,[],1);
-                            %tr_pr = aux(:,argmax_tr);
-                            
-                            %[~, accuracy_K_tr, accuracy_tr, accuracy_av_tr, F1_tr, F1_macro_tr, support_tr, condusionMatrix_tr] = evaluation(tr_tg, tr_pr)
+
+                            y_tr = readout(hidden_tr,W_out);
+                            [~, argmax_tr] = max(y_tr,[],1);
+                            tr_pr = aux(:,argmax_tr);
+                            [~, accuracy_K_tr, accuracy_tr, accuracy_av_tr, F1_tr, F1_macro_tr, support_tr, condusionMatrix_tr] = evaluation(tr_tg, tr_pr)
                             %[~, accuracy_K_tr] = evaluation(tr_tg, tr_pr);
                         
                             %meanLoss_tr = meanLoss_tr + (loss_tr / r_guesses);
