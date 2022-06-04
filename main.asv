@@ -66,8 +66,7 @@ for i = 1:length(omega_in)
                 for m = 1:length(a)
                     for n = 1:length(lambda_r)
                         meanAccuracy_K_vl = 0;
-                        config = config+1;
-                        disp([num2str(config/tot),'%'])
+                        config
                         for seed = 1:r_guesses
                             % TRAINING
                             hidden_tr = zeros(Nh(k),0);

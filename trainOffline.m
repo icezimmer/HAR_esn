@@ -6,13 +6,10 @@ end
 
 [Nh, num] = size(x);
 
-X = [x; ones(1, num)]; % Nh+1 x num
-
-%sX=size(X)
-%sd=size(d)
+X = [x; ones(1, num)];
 
 if lambda_r == 0
-    W_out = d * pinv(X); % (7 x num) * (Nh+1 x num)
+    W_out = d * pinv(X);
 elseif lambda_r > 0
     W_out = d * X' * inv(X*X' + lambda_r * eye(Nh+1));
 end

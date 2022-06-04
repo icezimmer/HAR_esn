@@ -17,7 +17,14 @@ for num = 1:7
 end
 
 for num = 1:6
-    T = readtable(fullfile('AReM','bending2', strcat('dataset', num2str(num), '.csv')),opts);
+    if num == 4 % dataset4.csv in Bending2 doesn't have commas
+        opts_new = detectImportOptions(fullfile('AReM','bending2','dataset4.csv'));
+        opts_new.VariableNames = [{'time'}, var_names];
+        opts_new.SelectedVariableNames = var_names;
+        T = readtable(fullfile('AReM','bending2', strcat('dataset', num2str(num), '.csv')),opts_new);
+    else
+        T = readtable(fullfile('AReM','bending2', strcat('dataset', num2str(num), '.csv')),opts);
+    end
     ts = T{:,:}';
     input_data = cat(3,input_data,ts);
     target_data = cat(2,target_data,one_hot(:,2));
