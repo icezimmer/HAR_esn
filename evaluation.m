@@ -1,13 +1,22 @@
 function [loss, accuracy_K, accuracy, accuracy_av, F1, F1_macro, support] = evaluation(target,predict)
-aux = eye(7);
+one_hot = eye(7);
 if strcmp(whos('target').class,'categorical')
     target = double(target);
-    target = aux(:,target);
+    target = one_hot(:,target);
 end
 if strcmp(whos('predict').class,'categorical')
     predict = double(predict);
-    predict = aux(:,predict);
+    predict = one_hot(:,predict);
 end
+if strcmp(whos('target').class,'cell')
+    target = [target{:}];
+    target = one_hot(:,target);
+end
+if strcmp(whos('predict').class,'cell')
+    predict = [predict{:,:}];
+    predict = one_hot(:,predict);
+end
+
 
 loss = immse(target, predict);
 accuracy_K = nnz(min(target==predict,[],1)) / size(target,2);

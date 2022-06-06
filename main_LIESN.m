@@ -1,6 +1,6 @@
 [input_data, target_data] = dataLoader();
 [dim, len, num] = size(input_data);
-
+[num_classes, ~] = size(target_data);
 
 seed_shuffle = 13;
 
@@ -43,7 +43,7 @@ ws = [0, 24];
 
 tot = length(omega_in)*length(rho)*length(Nh)*length(dns)*length(a)*length(lambda_r)*length(ws);
 r_guesses = 5;
-aux = eye(7);
+one_hot = eye(num_classes);
 
 % Model selection (by Grid search)
 disp('Grid Search: 0%')
@@ -71,7 +71,7 @@ for i = 1:length(omega_in)
     
                                 y_tr = readout(hidden_tr,W_out);
                                 [~, argmax_tr] = max(y_tr,[],1);
-                                tr_pr = aux(:,argmax_tr);
+                                tr_pr = one_hot(:,argmax_tr);
                                 [~, accuracy_K_tr] = evaluation(washout(tr_tg,ws(o)), tr_pr);
     
                                 meanAccuracy_K_tr = meanAccuracy_K_tr + (accuracy_K_tr / r_guesses);
@@ -86,7 +86,7 @@ for i = 1:length(omega_in)
     
                                 y_vl = readout(hidden_vl, W_out);
                                 [~, argmax_vl] = max(y_vl,[],1);
-                                vl_pr = aux(:,argmax_vl);
+                                vl_pr = one_hot(:,argmax_vl);
                                 
                                 [~, accuracy_K_vl] = evaluation(vl_tg, vl_pr);
                                 
@@ -131,7 +131,7 @@ for sample=1:size(ts_in,3)
 end
 y_ts = readout(hidden_ts, W_out_best);
 [~, argmax_ts] = max(y_ts,[],1);
-ts_pr = aux(:,argmax_ts);
+ts_pr = one_hot(:,argmax_ts);
 [~, accuracy_K_ts, accuracy_ts, accuracy_av_ts, F1_ts, F1_macro_ts] = evaluation(ts_tg, ts_pr);
 
 % Plot Confusion Matrix

@@ -1,6 +1,6 @@
 [input_data, target_data] = dataLoader();
 [dim, len, num] = size(input_data);
-[~, num_classes] = size(target_data);
+[num_classes, ~] = size(target_data);
 
 seed_shuffle = 13;
 
@@ -29,105 +29,78 @@ vl_tg = kron(vl_tg, ones(1,len));
 ts_tg = target_data(:,ts_index);
 ts_tg = kron(ts_tg, ones(1,len));
 
-[dv_layer_in, dv_tg] = dataProcess(dv_in, dv_tg);
+[dv_layer_in, dv_layer_tg] = dataProcess(dv_in, dv_tg);
 [tr_layer_in, tr_layer_tg] = dataProcess(tr_in, tr_tg);
 [vl_layer_in, vl_layer_tg] = dataProcess(vl_in, vl_tg);
 [ts_layer_in, ts_layer_tg] = dataProcess(ts_in, ts_tg);
 
-whos tr_layer_in
-whos tr_layer_tg
-
 % Hyperparameters
-%{
-len_window = 10;
-Nh = [10, 50, 100, 500]; % best 100
-eta = [0.0001, 0.002, 0.0025, 0.003, 0.005, 0.01, 0.1];
-alpha = [0, 0.001, 0.0001];
-weight_decay = [0, 0.01, 0.001, 0.0001, 0.00001]; % best 0.00001
-max_epochs = 5000;
-early_stopping = 10;
-%}
-
-Nh = [100]; % best 100
-eta = [0.002];
-alpha = [0.001];
-weight_decay = [0.0001]; % best 0.00001
-max_epochs = 500;
+Nh = 100;
+% InitialLearnRate 0.001 (default)
+% L2Regularization 0.0001 (default)
+max_epochs = [50, 100];
 early_stopping = 10;
 
-tot = length(Nh)*length(eta)*length(alpha)*length(weight_decay)*length(max_epochs)*length(early_stopping);
-num_runs = 5;
+tot = length(Nh)*length(max_epochs)*length(early_stopping);
 
 % Model selection (by Grid search)
 disp('Grid Search: 0%')
 minimum_vl = -Inf;
 config = 0;
 for j=1:length(Nh)
-    for k=1:length(eta)
-        for l=1:length(alpha)
-            for m=1:length(weight_decay)
-                for n=1:length(max_epochs)
-                    for o=1:length(early_stopping)
-                        meanAccuracy_K_tr = 0;
-                        meanAccuracy_K_vl = 0;
-                        %rng(seed)
-                        %wf = @(sz) 0.001*(2*rand(sz)-1);
-                        layers = [ ...
-                            sequenceInputLayer(dim)
-                            gruLayer(Nh(j), OutputMode="sequence")
-                            fullyConnectedLayer(num_classes)
-                            softmaxLayer
-                            classificationLayer];
-                        options = trainingOptions("sgdm", ...
-                            ExecutionEnvironment="cpu", ...
-                            MiniBatchSize=size(tr_layer_in,2), ...
-                            InitialLearnRate=eta(k), ...
-                            Momentum=alpha(l), ...
-                            L2Regularization=weight_decay(m), ...
-                            MaxEpochs=max_epochs(n), ...
-                            ValidationPatience=early_stopping(o), ...
-                            OutputNetwork="best-validation-loss", ...
-                            SequencePaddingDirection="left", ...
-                            shuffle='never', ...
-                            ValidationData={vl_layer_in,vl_layer_tg}, ...
-                            Verbose=0);
-                        [net, info] = trainNetwork(tr_layer_in,tr_layer_tg,layers,options);
-                        accuracy_K_tr = info.TrainingAccuracy(info.OutputNetworkIteration);
-                        meanAccuracy_K_tr = meanAccuracy_K_tr + (accuracy_K_tr / num_runs);
-                        accuracy_K_vl = info.FinalValidationAccuracy;
-                        meanAccuracy_K_vl = meanAccuracy_K_vl + (accuracy_K_vl / num_runs);
-                        config = config+1;
-                        disp(['Grid Search: ',num2str(100*(config/tot)),'%'])
-                        if meanAccuracy_K_vl > minimum_vl
-                            minimum_tr = meanAccuracy_K_tr;
-                            minimum_vl = meanAccuracy_K_vl;
-                            layers_best = layers;
-                            options_best = options;
-                        end
-                    end
-                end
+    for n=1:length(max_epochs)
+        for o=1:length(early_stopping)
+            meanAccuracy_K_tr = 0;
+            meanAccuracy_K_vl = 0;
+            layers = [ ...
+                sequenceInputLayer(dim)
+                gruLayer(Nh(j), OutputMode="sequence")
+                fullyConnectedLayer(num_classes)
+                softmaxLayer
+                classificationLayer];
+            options = trainingOptions('adam', ...
+                MiniBatchSize=size(tr_layer_tg, 1), ...
+                MaxEpochs=max_epochs(n), ...
+                GradientThreshold=2, ...
+                shuffle='never', ...
+                ValidationData={vl_layer_in,vl_layer_tg}, ...
+                ValidationPatience=early_stopping(o), ...
+                OutputNetwork="best-validation-loss", ...
+                Verbose=0);
+            [net, info] = trainNetwork(tr_layer_in,tr_layer_tg,layers,options);
+            accuracy_K_tr = info.TrainingAccuracy(info.OutputNetworkIteration);
+            accuracy_K_vl = info.FinalValidationAccuracy;
+            config = config+1;
+            disp(['Grid Search: ',num2str(100*(config/tot)),'%'])
+            if accuracy_K_vl > minimum_vl
+                minimum_tr = accuracy_K_tr;
+                minimum_vl = accuracy_K_vl;
+                layers_best = layers;
+                options_best = options;
             end
         end
     end
 end
 
+
 % Refit on the development set
 disp('Refit')
-options_best.MiniBatchSize = length(dv_index);
+options_best.MiniBatchSize = size(dv_layer_tg, 1);
 options_best.ValidationData = [];
 options_best.ValidationPatience = Inf;
 options_best.OutputNetwork = 'last-iteration';
 options_best.Verbose = 1;
-net_best = trainNetwork(dv_layer_in,dv_tg,layers_best,options_best);
+options_best.VerboseFrequency=1;
+net_best = trainNetwork(dv_layer_in,dv_layer_tg,layers_best,options_best);
 
 % Assessment on the test set
 disp('Assessment')
-ts_pr = classify(net_best, ts_layer_in);
-[~, accuracy_K_ts, accuracy_ts, accuracy_av_ts, F1_ts, F1_macro_ts] = evaluation(ts_tg, ts_pr);
+ts_layer_pr = classify(net_best, ts_layer_in);
+[~, accuracy_K_ts, accuracy_ts, accuracy_av_ts, F1_ts, F1_macro_ts] = evaluation(ts_layer_tg, ts_layer_pr);
 
 % Plot Confusion Matrix 
 gcf = figure;
-confusionchart(ts_layer_tg, ts_pr);
+confusionchart([ts_layer_tg{:,:}], [ts_layer_pr{:,:}]);
 title("Confusion Matrix (TS set)")
 
 % Save plot and net structure

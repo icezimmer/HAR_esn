@@ -1,6 +1,6 @@
 [input_data, target_data] = dataLoader();
 [dim, len, num] = size(input_data);
-[~, num_classes] = size(target_data);
+[num_classes, ~] = size(target_data);
 
 seed_shuffle = 13;
 
@@ -20,33 +20,27 @@ tr_in = input_data(:,:,tr_index);
 vl_in = input_data(:,:,vl_index);
 ts_in = input_data(:,:,ts_index);
 
-dv_tg = target_data(:,dv_index); 
+dv_tg = target_data(:,dv_index);
+dv_tg = kron(dv_tg, ones(1,len));
 tr_tg = target_data(:,tr_index);
+tr_tg = kron(tr_tg, ones(1,len));
 vl_tg = target_data(:,vl_index);
+vl_tg = kron(vl_tg, ones(1,len));
 ts_tg = target_data(:,ts_index);
+ts_tg = kron(ts_tg, ones(1,len));
 
-[dv_layer_in, dv_tg] = dataProcess(dv_in, dv_tg);
+[dv_layer_in, dv_layer_tg] = dataProcess(dv_in, dv_tg);
 [tr_layer_in, tr_layer_tg] = dataProcess(tr_in, tr_tg);
 [vl_layer_in, vl_layer_tg] = dataProcess(vl_in, vl_tg);
 [ts_layer_in, ts_layer_tg] = dataProcess(ts_in, ts_tg);
 
 % Hyperparameters
-%{
 len_window = 10;
 Nh = [10, 50, 100, 500]; % best 100
 eta = [0.0001, 0.002, 0.0025, 0.003, 0.005, 0.01, 0.1];
 alpha = [0, 0.001, 0.0001];
 weight_decay = [0, 0.01, 0.001, 0.0001, 0.00001]; % best 0.00001
 max_epochs = 5000;
-early_stopping = 10;
-%}
-
-len_window = 10;
-Nh = [100]; % best 100
-eta = [0.002];
-alpha = [0.001];
-weight_decay = [0.0001]; % best 0.00001
-max_epochs = 5;
 early_stopping = 10;
 
 tot = length(len_window)*length(Nh)*length(eta)*length(alpha)*length(weight_decay)*length(max_epochs)*length(early_stopping);
@@ -72,21 +66,17 @@ for i=1:length(len_window)
                                     sequenceInputLayer(dim)
                                     convolution1dLayer(len_window(i), Nh(j), Padding="causal", WeightsInitializer=wf) %num. of filters = num. of hidden neurons
                                     tanhLayer
-                                    layerNormalizationLayer
-                                    globalAveragePooling1dLayer
                                     fullyConnectedLayer(num_classes)
                                     softmaxLayer
                                     classificationLayer];
                                 options = trainingOptions("sgdm", ...
-                                    ExecutionEnvironment="cpu", ...
-                                    MiniBatchSize=length(tr_index), ...
+                                    MiniBatchSize=size(tr_layer_tg, 1), ...
                                     InitialLearnRate=eta(k), ...
                                     Momentum=alpha(l), ...
                                     L2Regularization=weight_decay(m), ...
                                     MaxEpochs=max_epochs(n), ...
                                     ValidationPatience=early_stopping(o), ...
                                     OutputNetwork="best-validation-loss", ...
-                                    SequencePaddingDirection="left", ...
                                     shuffle='never', ...
                                     ValidationData={vl_layer_in,vl_layer_tg}, ...
                                     Verbose=0);
@@ -114,21 +104,22 @@ end
 
 % Refit on the development set
 disp('Refit')
-options_best.MiniBatchSize = length(dv_index);
+options_best.MiniBatchSize = size(dv_layer_tg, 1);
 options_best.ValidationData = [];
 options_best.ValidationPatience = Inf;
 options_best.OutputNetwork = 'last-iteration';
 options_best.Verbose = 1;
-net_best = trainNetwork(dv_layer_in,dv_tg,layers_best,options_best);
+options_best.VerboseFrequency = 1;
+net_best = trainNetwork(dv_layer_in,dv_layer_tg,layers_best,options_best);
 
 % Assessment on the test set
 disp('Assessment')
-ts_pr = classify(net_best, ts_layer_in, SequencePaddingDirection="left");
-[~, accuracy_K_ts, accuracy_ts, accuracy_av_ts, F1_ts, F1_macro_ts] = evaluation(ts_tg, ts_pr);
+ts_layer_pr = classify(net_best, ts_layer_in, SequencePaddingDirection="left");
+[~, accuracy_K_ts, accuracy_ts, accuracy_av_ts, F1_ts, F1_macro_ts] = evaluation(ts_layer_tg, ts_layer_pr);
 
 % Plot Confusion Matrix 
 gcf = figure;
-confusionchart(ts_layer_tg, ts_pr);
+confusionchart([ts_layer_tg{:,:}], [ts_layer_pr{:,:}]);
 title("Confusion Matrix (TS set)")
 
 % Save plot and net structure
