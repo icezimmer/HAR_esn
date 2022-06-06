@@ -1,4 +1,3 @@
-%f = parfeval(backgroundPool,@streamData, ts_in, ts_tg, 10);
 % LOAD TEST SET
 [input_data, target_data] = dataLoader();
 [dim, len, num] = size(input_data);
