@@ -112,12 +112,15 @@ end
 
 % Refit on the development set
 disp('Refit')
+start=tic;
 hidden_dv = zeros(Nh_best,0);
 for sample=1:size(dv_in,3)
     [~, sequence_dv] = rc(dv_in(:,:,sample), seed, omega_in_best, rho_best, Nh_best, dns_best, a_best, ws_best);
     hidden_dv = cat(2,hidden_dv, sequence_dv);
 end
 W_out_best = trainOffline(hidden_dv, dv_tg, lambda_r_best, ws_best);
+timeTrian=toc(start);
+disp(timeTrain)
 
 % Assessment on the test set
 disp('Assessment')

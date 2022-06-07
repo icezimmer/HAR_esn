@@ -110,7 +110,10 @@ options_best.ValidationPatience = Inf;
 options_best.OutputNetwork = 'last-iteration';
 options_best.Verbose = 1;
 options_best.VerboseFrequency = 1;
+start = tic;
 net_best = trainNetwork(dv_layer_in,dv_layer_tg,layers_best,options_best);
+timeTrain = toc(start);
+disp(timeTrain)
 
 % Assessment on the test set
 disp('Assessment')
