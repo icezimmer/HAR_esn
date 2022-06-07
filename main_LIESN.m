@@ -15,9 +15,6 @@ tr_index = 1:50; % from 1 to 50
 vl_index = 51:64; % from 51 to 64
 ts_index = 65:88; % from 65 to 88
 
-
-%[dv_index, tr_index, vl_index, ts_index] = holdOut();
-
 dv_in = input_data(:,:,dv_index);
 tr_in = input_data(:,:,tr_index);
 vl_in = input_data(:,:,vl_index);
@@ -33,13 +30,13 @@ ts_tg = target_data(:,ts_index);
 ts_tg = kron(ts_tg, ones(1,len));
 
 % Hyper-parameters
-omega_in = 0.4;
-rho = 0.9;
-Nh = [10, 50, 100, 300, 500];
-dns = 0.1;
-a = [0.1, 0.3, 0.5, 0.7, 1];
-lambda_r = [0.0001, 0.001, 0.01, 0.1, 0.5, 1, 5, 10, 100, 1000];
-ws = [0, 24];
+omega_in = 0.4; %input scaling
+rho = 0.9; %spectral radius
+Nh = [10, 50, 100, 300, 500]; %num. hidden neurons
+dns = 0.1; %connectivity
+a = [0.1, 0.3, 0.5, 0.7, 1]; %leaking rate
+lambda_r = [0.0001, 0.001, 0.01, 0.1, 0.5, 1, 5, 10, 100, 1000]; %regularization
+ws = [0, 24]; %transient
 
 tot = length(omega_in)*length(rho)*length(Nh)*length(dns)*length(a)*length(lambda_r)*length(ws);
 r_guesses = 5;

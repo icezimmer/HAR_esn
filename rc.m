@@ -1,18 +1,18 @@
-function [x, x_ws, pooler, W_in, W_hat] = rc(u, seed, omega_in, rho, Nh, dns, a, Nw, x0)
+function [x, x_ws, pooler, W_in, W_hat] = rc(u, seed, omega_in, rho, Nh, dns, a, ws, x0)
 
 [Nu, time_steps] = size(u);
 
-if nargin < 6 % no dns, a, Nw, x0
+if nargin < 6 % no dns, a, ws, x0
     dns = 1;
     a = 1;
-    Nw = 0;
+    ws = 0;
     x = zeros(Nh,1);
-elseif nargin == 6 % no a, Nw, x0
+elseif nargin == 6 % no a, ws, x0
     a = 1;
-    Nw = 0;
+    ws = 0;
     x = zeros(Nh,1);
-elseif nargin == 7 % no Nw, x0
-    Nw = 0;
+elseif nargin == 7 % no ws, x0
+    ws = 0;
     x = zeros(Nh,1);
 elseif nargin == 8 % no x0
     x = zeros(Nh,1);
@@ -38,7 +38,7 @@ else
     x = x(:, 2:end);
     
     % Discard the washout
-    x_ws = x(:, Nw+1:end);
+    x_ws = x(:, ws+1:end);
     
     pooler = x(:, end);
 end
