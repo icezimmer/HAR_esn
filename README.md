@@ -1,3 +1,6 @@
-# Human Activity Recognition by Echo State Network
+# HAR by ESNs
+Activity recognition plays a key role in providing activity assistance and care for users in smart homes. In this work, I present an activity recognition system that classifies in real-time a set of common daily activities. This system exploits the data sampled by sensors embedded in a smartphone carried out by the user and the reciprocal Received Signal Strength (RSS) values coming from worn wireless sensor devices. In order to achieve an effective and responsive classification, I model the RSS stream, using Recurrent Neural Networks (RNNs) implemented as efficient Echo State Networks (ESNs), within the Reservoir Computing (RC) paradigm. In this report, the performance of the proposed activity recognition system is assessed on a purposely collected real-world dataset, taking also into account two competitive neural network approachs for performance comparison. My results show that the proposed system reaches a good accuracy.
+
+## Usage
 The scripts main_LIESN.m, main_EuSN, main_1DCONV.m and main_GRU.m, perform the grid search and evaluate rispectively the Leaky Integrator-Echo State Network (LI-ESN), Euler State Network (EuSN), Input Delay Neural Network (IDNN) and the Gated Recurrent Unit (GRU) architectures on the test set.
 The script realtime_LIESN.m predict the output of a heterogeneous signal, in a real-time simulation.
