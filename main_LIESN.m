@@ -1,3 +1,5 @@
+addpath src
+
 [input_data, target_data] = dataLoader();
 [dim, len, num] = size(input_data);
 [num_classes, ~] = size(target_data);
@@ -119,8 +121,8 @@ for sample=1:size(dv_in,3)
     hidden_dv = cat(2,hidden_dv, sequence_dv);
 end
 W_out_best = trainOffline(hidden_dv, dv_tg, lambda_r_best, ws_best);
-timeTrian=toc(start);
-disp(timeTrain)
+timeTrain=toc(start);
+disp(['Refit best configuration time: ', num2str(timeTrain)])
 
 % Assessment on the test set
 disp('Assessment')

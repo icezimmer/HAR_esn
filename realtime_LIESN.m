@@ -1,3 +1,5 @@
+addpath src
+
 % LOAD TEST SET
 [input_data, target_data] = dataLoader();
 [dim, len, num] = size(input_data);

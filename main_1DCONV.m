@@ -1,3 +1,5 @@
+addpath src
+
 [input_data, target_data] = dataLoader();
 [dim, len, num] = size(input_data);
 [num_classes, ~] = size(target_data);
@@ -113,7 +115,7 @@ options_best.VerboseFrequency = 1;
 start = tic;
 net_best = trainNetwork(dv_layer_in,dv_layer_tg,layers_best,options_best);
 timeTrain = toc(start);
-disp(timeTrain)
+disp(['Refit best configuration time: ', num2str(timeTrain)])
 
 % Assessment on the test set
 disp('Assessment')
